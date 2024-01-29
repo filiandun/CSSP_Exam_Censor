@@ -42,6 +42,7 @@
     <Reference Include="System.Drawing.Common, Version=7.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\System.Drawing.Common.7.0.0\lib\net462\System.Drawing.Common.dll</HintPath>
     </Reference>
+    <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -65,7 +66,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="CensorProcessor.cs" />
+    <Compile Include="CensorWordList.cs" />
+    <Compile Include="FileProcessor.cs" />
+    <Compile Include="InfoBox.cs" />
+    <Compile Include="FoundFileList.cs" />
     <Compile Include="ListBoxItems.cs" />
+    <Compile Include="ProgressManager.cs" />
     <Compile Include="Report.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -107,6 +114,14 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\file minus icon.png" />
+    <Resource Include="Icons\folder icon.png" />
+    <Resource Include="Icons\trash bin icon.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Icons\file plus icon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

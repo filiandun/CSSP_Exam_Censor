@@ -10,53 +10,38 @@ namespace Censor
 {
     internal static class ListBoxItems
     {
-        public static List<Grid> CreateCensorWordItems(List<string> newCensorWords, List<string> censorWords = null)
+        public static Grid CreateCensorWordItem(string censorWord)
         {
-            //// Сравнение, чтобы не было повторяющихся слов
-            //List<string> completeCensorWords = newCensorWords.Except(censorWords).ToList();
-            //if (completeCensorWords.Count == 0)
-            //{
-            //    return null;
-            //}
-
-            List<Grid> wordItemGrids = new List<Grid>();
-
-            foreach (string censorWord in newCensorWords)
+            // Создание сетки
+            Grid wordItemGrid = new Grid
             {
-                // Создание сетки
-                Grid wordItemGrid = new Grid
-                {
-                    HorizontalAlignment = HorizontalAlignment.Stretch,
-                    Height = 42,
-                };
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                Height = 42,
+            };
 
-                // Создание прямоугольника со скошенными углами
-                System.Windows.Shapes.Rectangle rectangle = new System.Windows.Shapes.Rectangle
-                {
-                    Fill = new SolidColorBrush(Color.FromArgb(255, 15, 15, 15)),
-                    RadiusX = 5,
-                    RadiusY = 5,
-                };
+            // Создание прямоугольника со скошенными углами
+            System.Windows.Shapes.Rectangle rectangle = new System.Windows.Shapes.Rectangle
+            {
+                Fill = new SolidColorBrush(Color.FromArgb(255, 15, 15, 15)),
+                RadiusX = 5,
+                RadiusY = 5,
+            };
 
-                wordItemGrid.Children.Add(rectangle);
+            wordItemGrid.Children.Add(rectangle);
 
-                // Создание Label с словом
-                Label fileNameLabel = new Label
-                {
-                    Content = censorWord,
-                    Foreground = Brushes.White,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Center
-                };
+            // Создание Label с словом
+            Label fileNameLabel = new Label
+            {
+                Content = censorWord,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Center
+            };
 
-                wordItemGrid.Children.Add(fileNameLabel);
-
-                // Добавление в массив
-                wordItemGrids.Add(wordItemGrid);
-            }
+            wordItemGrid.Children.Add(fileNameLabel);
 
             // Возврат готового элемента
-            return wordItemGrids;
+            return wordItemGrid;
         }
 
         public static Grid CreateFoundFileItem(FoundFile foundFile)

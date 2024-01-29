@@ -22,6 +22,13 @@
         </Grid.RowDefinitions>
 
         <!-- ПЕРВЫЙ СТОЛБЕЦ -->
+        <!-- верхняя строка -->
+
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Rectangle Fill="#FF0F0F0F" Margin="5" RadiusX="5" RadiusY="5"/>
+            <TextBlock Text="Найденных файлов" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+            <TextBlock x:Name="fileCountTextBlock" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+        </Grid>
 
         <!-- нижняя строка -->
         <Grid Grid.Row="1" Grid.Column="0">
@@ -32,7 +39,7 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <ListBox x:Name="filesListBox" Grid.Row="0" Grid.Column="0" Margin="5" BorderBrush="Black" SelectionChanged="filesListBox_SelectionChanged"/>
+            <ListBox x:Name="foundFileListBox" Grid.Row="0" Grid.Column="0" Margin="5" BorderBrush="Black" SelectionChanged="filesListBox_SelectionChanged"/>
 
             <Grid Grid.Row="1">
                 <Grid.ColumnDefinitions>
@@ -40,7 +47,9 @@
                     <ColumnDefinition Width="6*"/>
                 </Grid.ColumnDefinitions>
 
-                <Button x:Name="choiceDirectoryButton" Grid.Column="0" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" Click="choiceDirectoryButton_Click"/>
+                <Button x:Name="choiceDirectoryButton" Grid.Column="0" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" Click="choiceDirectoryButton_Click">
+                    <Image Source="/Icons/folder icon.png"/>
+                </Button>
                 <ComboBox x:Name="directoryPathComboBox" Grid.Column="1" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" IsEditable="True"/>
             </Grid>
 
@@ -49,9 +58,15 @@
             <UniformGrid Grid.Row="3" Rows="1" Columns="5">
                 <Button x:Name="startFineButton" Content="Начать поиск" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" Click="startFindButton_Click"/>
                 <Button x:Name="stopFindButton" Content="Остановить поиск" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="stopFindButton_Click"/>
-                <Button x:Name="addFileButton" Content="+" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="addFileButton_Click"/>
-                <Button x:Name="delFileButton" Content="-" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="delFileButton_Click"/>
-                <Button x:Name="clsFileButton" Content="С" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="clsFileButton_Click"/>
+                <Button x:Name="addFileButton" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="addFileButton_Click">
+                    <Image Source="/Icons/file plus icon.png"/>
+                </Button>
+                <Button x:Name="delFileButton" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="delFileButton_Click">
+                    <Image Source="/Icons/file minus icon.png"/>
+                </Button>
+                <Button x:Name="clsFileButton" Margin="5" HorizontalAlignment="Stretch"  VerticalAlignment="Stretch" BorderBrush="Black" Click="clsFileButton_Click">
+                    <Image Source="/Icons/trash bin icon.png"/>
+                </Button>
             </UniformGrid>
         </Grid>
 

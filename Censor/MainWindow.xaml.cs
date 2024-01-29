@@ -9,34 +9,50 @@ using System.IO;
 using System.Windows.Documents;
 using Microsoft.Win32;
 
-using Winforms = System.Windows.Forms;
-using System.Diagnostics;
 using System.Threading;
 
-
+using Winforms = System.Windows.Forms;
+using WpfUi = Wpf.Ui.Appearance;
 
 namespace Censor
 {
     public partial class MainWindow : Window
     {
-        private Report report;
+        private CancellationTokenSource findCancellationTokenSource;
+
+        private FoundFileList foundFileList;
+        private CensorWordList censorWordList;
+
+        private FileProcessor fileProcessor;
+        private CensorProcessor censorProcessor;
+
 
         public MainWindow()
         {
-            InitializeComponent();
+            this.InitializeComponent();
 
-            Wpf.Ui.Appearance.Theme.Apply(Wpf.Ui.Appearance.ThemeType.Dark, Wpf.Ui.Appearance.BackgroundType.Tabbed, true);
+            this.InitializeDirectoryComboBox();
+            this.InitializeFileFormatComboBox();
+
+            WpfUi.Theme.Apply(WpfUi.ThemeType.Dark, WpfUi.BackgroundType.Tabbed, true); // тёмная тема
 
             this.saveCopyFileOptionRadioButton.Visibility = Visibility.Hidden;
             this.replaceOriginalFileOptionRadioButton.Visibility = Visibility.Hidden;
 
-            this.report = new Report(new List<FoundFile>(), new List<string>());
+            ProgressManager.Initialize(this.progressBar);
 
-            this.GetAllDrive();
-            this.GetFileFormats();
+            this.findCancellationTokenSource = new CancellationTokenSource();
+
+            this.foundFileList = new FoundFileList(this.foundFileListBox);
+            this.censorWordList = new CensorWordList(this.censorWordListBox);
+
+            this.fileProcessor = new FileProcessor(this.foundFileList);
+            this.censorProcessor = new CensorProcessor(this.foundFileList, this.censorWordList);
         }
 
-        private void GetAllDrive()
+
+
+        private void InitializeDirectoryComboBox()
         {
             this.directoryPathComboBox.Items.Add("Поиск на всех накопителях");
             foreach (DriveInfo drive in DriveInfo.GetDrives())
@@ -46,7 +62,7 @@ namespace Censor
             this.directoryPathComboBox.Items.Add(@"D:\Downloads\Блокноты");
         }
 
-        private void GetFileFormats()
+        private void InitializeFileFormatComboBox()
         {
             this.fileFormatComboBox.Items.Add("Все перечисленные");
             this.fileFormatComboBox.Items.Add(".txt");
@@ -58,99 +74,66 @@ namespace Censor
         }
 
 
+
+
+
         private async void startFindButton_Click(object sender, RoutedEventArgs e)
         {
             string path = this.directoryPathComboBox.Text;
+            string fileFormat = this.fileFormatComboBox.Text;
 
-            if (String.IsNullOrEmpty(path))
+            // Обработка ошибок в полях
+            if (string.IsNullOrWhiteSpace(path))
             {
-                // TO DO
-                Wpf.Ui.Controls.MessageBox messageBox = new Wpf.Ui.Controls.MessageBox
-                {
-                    Title = "Внимание",
-                    Content = "Вы оставили поле с путём пустым!",
-                    ButtonLeftName = "Сейчас исправлю",
-                    ButtonRightName = "Начать поиск по всем накопителям"
-                };
-                messageBox.Show();
+                InfoBox.Show("Вы оставили поле с путём пустым!", "Внимание");
 
                 return;
             }
 
             if (!Directory.Exists(path))
             {
-                // TO DO
-                Wpf.Ui.Controls.MessageBox messageBox = new Wpf.Ui.Controls.MessageBox
-                {
-                    Title = "Внимание",
-                    Content = $"Указанный путь ({path}) не найден!",
-                    ButtonLeftName = "Сейчас исправлю",
-                    ButtonRightName = "Начать поиск по всем накопителям"
-                };
-                messageBox.Show();
+                InfoBox.Show($"Указанный путь ({path}) не найден!", "Внимание");
 
                 return;
             }
 
-            try
+            if (string.IsNullOrWhiteSpace(fileFormat))
             {
-                // TO DO Тут нужно сделать умную многопоточность
+                InfoBox.Show("Вы оставили поле с форматом пустым!", "Внимание");
 
-                Stopwatch stopwatch = new Stopwatch();
-                stopwatch.Start();
-
-                //List<Task> tasks = new List<Task>();
-                //foreach (string pathNewFile in Directory.EnumerateFiles(path, "*.txt", SearchOption.AllDirectories))
-                //{
-                //    tasks.Add(Task.Run(() => this.CreateListBoxItemFile(pathNewFile)));
-                //}
-                //await Task.WhenAll(tasks);
-
-                foreach (string pathNewFile in Directory.EnumerateFiles(path, "*.txt", SearchOption.AllDirectories))
-                {
-                    this.CreateListBoxItemFile(pathNewFile);
-                }
-
-                //Parallel.ForEach(Directory.EnumerateFiles(path, "*.txt", SearchOption.AllDirectories), pathNewFile =>
-                //{
-                //    this.CreateListBoxItemFile(pathNewFile);
-                //});
-
-                //int maxConcurrency = Environment.ProcessorCount; // или любое другое желаемое количество параллельных задач
-                //SemaphoreSlim semaphoreSlim = new SemaphoreSlim(maxConcurrency);
-
-                //List<Task> tasks = new List<Task>();
-                //foreach (string pathNewFile in Directory.EnumerateFiles(path, "*.txt", SearchOption.AllDirectories))
-                //{
-                //    tasks.Add(Task.Run(async () =>
-                //    {
-                //        await semaphoreSlim.WaitAsync();
-                //        try
-                //        {
-                //            this.CreateListBoxItemFile(pathNewFile);
-                //        }
-                //        finally
-                //        {
-                //            semaphoreSlim.Release();
-                //        }
-                //    }));
-                //}
-
-                //await Task.WhenAll(tasks);
-
-                stopwatch.Stop();
-
-                MessageBox.Show($"Было затрачено: {stopwatch.ElapsedMilliseconds} мс");
+                return;
             }
-            catch (Exception ex)
+
+            // Обработка ввода с полей
+            if (this.directoryPathComboBox.Text == "Поиск на всех накопителях")
             {
-                MessageBox.Show(ex.Message);
+                // TO DO
+                // Думаю, что нужно асинхронно запускать this.FileFinderAsync для каждого накопителя
             }
+
+            switch (fileFormat)
+            {
+                case "Все перечисленные": fileFormat = "*.*"; break;
+                case ".txt": fileFormat = "*.txt"; break;
+                case ".doc": fileFormat = "*.doc"; break;
+                case ".dot": fileFormat = "*.dot"; break;
+                case ".docx": fileFormat = "*.docx"; break;
+                case ".pdf": fileFormat = "*.pdf"; break;
+                case ".html": fileFormat = "*.html"; break;
+            }
+
+            // ТУТ НУЖНО ЗАБЛОКИРОВАТЬ ВСЁ, КРОМЕ ОСТАНОВКИ ПОИСКА ФАЙЛОВ
+
+            this.progressBar.Value = 0;
+            await this.fileProcessor.FileFinderAsync(path, fileFormat); // рекурсивный поиск
+
+            // ТУТ НУЖНО РАЗБЛОКИРОВАТЬ ВСЁ, КРОМЕ ОСТАНОВКИ ПОИСКА ФАЙЛОВ
         }
 
+       
         private void stopFindButton_Click(object sender, RoutedEventArgs e)
         {
-
+            this.findCancellationTokenSource.Cancel();
         }
 
 
@@ -187,11 +170,11 @@ namespace Censor
 
             this.ApplyRichTextBoxStyles();
 
-            int indexSelectedFile = this.filesListBox.SelectedIndex;
+            int indexSelectedFile = this.foundFileListBox.SelectedIndex;
 
             if (indexSelectedFile != -1)
             {
-                string pathSelectedFile = this.report.FoundFiles[indexSelectedFile].FileInfo.FullName;
+                string pathSelectedFile = this.foundFileList[indexSelectedFile].FileInfo.FullName;
 
                 try
                 {
@@ -209,11 +192,11 @@ namespace Censor
                     this.saveCopyFileOptionRadioButton.Visibility = Visibility.Visible;
                     this.replaceOriginalFileOptionRadioButton.Visibility = Visibility.Visible;
 
-                    if (this.report.FoundFiles[indexSelectedFile].FileSaveOption == FileSaveOption.SaveCopy)
+                    if (this.foundFileList[indexSelectedFile].FileSaveOption == FileSaveOption.SaveCopy)
                     {
                         this.saveCopyFileOptionRadioButton.IsChecked = true;
                     }
-                    else if (this.report.FoundFiles[indexSelectedFile].FileSaveOption == FileSaveOption.ReplaceOriginal)
+                    else if (this.foundFileList[indexSelectedFile].FileSaveOption == FileSaveOption.ReplaceOriginal)
                     {
                         this.replaceOriginalFileOptionRadioButton.IsChecked = true;
                     }
@@ -221,15 +204,12 @@ namespace Censor
                 }
                 catch (Exception ex)
                 {
-                    Wpf.Ui.Controls.MessageBox messageBox = new Wpf.Ui.Controls.MessageBox
-                    {
-                        Title = "Ошибка",
-                        Content = ex.Message,
-                    };
-                    messageBox.Show();
+                    InfoBox.Show(ex.Message, "Критическая ошибка");
                 }
             }
         }
+
+
 
 
 
@@ -242,128 +222,22 @@ namespace Censor
             {
                 string pathNewFile = openFileDialog.FileName;
 
-                this.CreateListBoxItemFile(pathNewFile);
+                this.foundFileList.Add(new FoundFile(pathNewFile));
             }
         }
 
         private void delFileButton_Click(object sender, RoutedEventArgs e)
         {
-            int indexSelectedFile = this.filesListBox.SelectedIndex;
+            int indexSelectedFile = this.foundFileListBox.SelectedIndex;
 
-            if (indexSelectedFile != -1)
-            {
-                this.filesListBox.Items.RemoveAt(indexSelectedFile);
-                this.report.FoundFiles.RemoveAt(indexSelectedFile);
-            }
+            this.foundFileList.RemoveAt(indexSelectedFile);
         }
 
         private void clsFileButton_Click(object sender, RoutedEventArgs e)
         {
-            this.filesListBox.Items.Clear();
-            this.report.FoundFiles.Clear();
+            this.foundFileList.Clear();
         }
 
-
-
-
-        private async void startCensorshipButton_Click(object sender, RoutedEventArgs e)
-        {
-            // TO DO
-            // Тут тоже лютая многопоточка нужна
-            this.progressBar.Minimum = 0;
-            this.progressBar.Maximum = this.report.FoundFiles.Count * this.report.CensorWords.Count;
-            this.progressBar.Value = 0;
-
-            foreach (FoundFile foundFile in this.report.FoundFiles)
-            {
-                string filePath = foundFile.FileInfo.FullName;
-
-                List<string> oldLines = File.ReadAllLines(filePath).Where(l => !String.IsNullOrWhiteSpace(l)).ToList();
-                List<string> newLines = oldLines;
-
-                foreach (string censorWord in this.report.CensorWords)
-                {
-                    newLines = this.CensorWordsSearch(newLines, censorWord, foundFile);
-
-                    this.progressBar.Value++;
-                    await Task.Delay(10);
-                }
-
-                if (newLines.Count > 0)
-                {
-                    //this.EditFile(newLines, foundFile); // сохранение файлов
-                }
-            }
-
-            // TO DO
-            // Хочу, чтобы в RichTextBox прям построчно добавлялся отчёт, но тогда нужно переделать
-            this.ApplyRichTextBoxStyles();
-            this.fileContentRichTextBox.AppendText(this.report.GenerateReport());
-
-            this.radioButtonsUniformGrid.Visibility = Visibility.Hidden;
-            this.saveReportButton.Visibility = Visibility.Visible;
-            //
-        }
-
-        private List<string> CensorWordsSearch(List<string> oldLines, string censorWord, FoundFile foundFile)
-        {
-            int count = 0;
-            List<string> newLines = new List<string>();
-            string newLine = "";
-
-            foreach (string oldLine in oldLines)
-            {
-                foreach (string word in oldLine.Split(' '))
-                {
-                    if (word.IndexOf(censorWord, StringComparison.OrdinalIgnoreCase) != -1)
-                    {
-                        newLine += "******* ";
-                        count++;
-                    }
-                    else
-                    {
-                        newLine += $"{word} ";
-                    }
-                }
-                newLines.Add(newLine);
-            }
-
-            foundFile.AddCensorWord(censorWord, count);
-
-            return newLines;
-        }
-
-        private void EditFile(List<string> newLines, FoundFile foundFile)
-        {
-            string filePath;
-
-            // Параметры сохранения
-            if (foundFile.FileSaveOption == FileSaveOption.ReplaceOriginal)
-            {
-                // Чтобы и копия не перезаписалась, если вдруг она существует
-                int i = 0;
-                do
-                {
-                    string fileName = Path.GetFileNameWithoutExtension(foundFile.FileInfo.FullName) + "_copy" + (i == 0 ? "" : $"{i}");
-                    filePath = Path.Combine(foundFile.FileInfo.DirectoryName, fileName, foundFile.FileInfo.Extension);
-                    i++;
-                }
-                while (File.Exists(filePath));
-            }
-            else
-            {
-                filePath = foundFile.FileInfo.FullName;
-            }
-
-            // Создание и запись в файл
-            using (StreamWriter streamWriter = new StreamWriter(filePath))
-            {
-                foreach (string line in newLines)
-                {
-                    streamWriter.WriteLine(line);
-                }
-            }
-        }
 
 
         private void ApplyRichTextBoxStyles()
@@ -382,6 +256,7 @@ namespace Censor
 
 
 
+
         private void openFileDialogButton_Click(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -393,72 +268,48 @@ namespace Censor
                 {
                     string censorFilePath = openFileDialog.FileName;
                     List<string> allLines = File.ReadAllLines(censorFilePath).Where(l => !String.IsNullOrWhiteSpace(l)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-
-                    this.report.CensorWords.AddRange(allLines);
-                    this.censorWordListBox.ItemsSource = ListBoxItems.CreateCensorWordItems(this.report.CensorWords);
+                    this.censorWordList.AddRange(allLines);
                 }
                 catch (Exception ex)
                 {
-                    Wpf.Ui.Controls.MessageBox messageBox = new Wpf.Ui.Controls.MessageBox
-                    {
-                        Title = "Ошибка",
-                        Content = ex.Message,
-                    };
-                    messageBox.Show();
+                    InfoBox.Show(ex.Message, "Критическая ошибка");
                 }
             }
         }
+
         private void addCensorWordButton_Click(object sender, RoutedEventArgs e)
         {
-            this.censorWordListBox.ItemsSource = null;
-            this.report.CensorWords.Add("Недоделал");
-            this.censorWordListBox.ItemsSource = ListBoxItems.CreateCensorWordItems(this.report.CensorWords);
+            this.censorWordList.Add("Недоделал");
         }
 
         private void delCensorWordButton_Click(object sender, RoutedEventArgs e)
         {
             int indexSelectedCensorWord = this.censorWordListBox.SelectedIndex;
 
-            if (indexSelectedCensorWord != -1)
-            {
-                this.censorWordListBox.ItemsSource = null;
-                this.report.CensorWords.RemoveAt(indexSelectedCensorWord);
-                this.censorWordListBox.ItemsSource = ListBoxItems.CreateCensorWordItems(this.report.CensorWords);
-            }
+            this.censorWordList.RemoveAt(indexSelectedCensorWord);
         }
 
         private void clsCensorWordsListButton_Click(object sender, RoutedEventArgs e)
         {
-            if (this.censorWordListBox.Items.Count > 0)
-            {
-                this.censorWordListBox.ItemsSource = null;
-                this.report.CensorWords.Clear();
-                this.censorWordListBox.ItemsSource = ListBoxItems.CreateCensorWordItems(this.report.CensorWords);
-            }
+            this.censorWordList.Clear();
         }
 
 
-
-
-        private async void CreateListBoxItemFile(string filePath)
+        private async void startCensorshipButton_Click(object sender, RoutedEventArgs e)
         {
-            //foreach (FoundFile foundFile in this.report.FoundFiles) // проверка на наличие файла в списке
-            //{
-            //    if (foundFile.FileInfo.FullName == filePath)
-            //    {
-            //        MessageBox.Show("Файл уже был добавлен.");
-            //        return;
-            //    }
-            //}
+            await this.censorProcessor.Censor();
 
-            FoundFile newFoundFile = new FoundFile(filePath);
-            this.report.FoundFiles.Add(newFoundFile);
+            this.ApplyRichTextBoxStyles();
 
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-            {
-                this.filesListBox.Items.Add(ListBoxItems.CreateFoundFileItem(newFoundFile));
-            }));
+            // TO DO
+            // Хочу, чтобы в RichTextBox прям построчно добавлялся отчёт, но тогда нужно переделать.
+            // 100% нужно переделать, чтобы прям построчно добавлялся отчёт, иначе тут всё ложится (надолго зависает), когда очень строк получается для добавления в RichTextBox
+            this.fileContentRichTextBox.AppendText(await Report.GenerateReport(this.foundFileList, this.censorWordList));
+
+            this.radioButtonsUniformGrid.Visibility = Visibility.Hidden;
+            this.saveReportButton.Visibility = Visibility.Visible;
         }
+
 
 
 
@@ -466,24 +317,25 @@ namespace Censor
 
         private void fileOptionRadioButton_Checked(object sender, RoutedEventArgs e)
         {
-            if (this.report != null)
+            if (this.foundFileList != null) // КОСТЫЛЬ
+                                            // так как вылетает исключение, что this.foundFileList == null, так как radioButton изменяется ещё до инициализации всего
             {
-                int indexSelectedFile = this.filesListBox.SelectedIndex;
+                int indexSelectedFile = this.foundFileListBox.SelectedIndex;
 
                 if (this.saveCopyFileOptionRadioButton.IsChecked == true)
                 {
-                    this.report.FoundFiles[indexSelectedFile].FileSaveOption = FileSaveOption.SaveCopy;
+                    this.foundFileList[indexSelectedFile].FileSaveOption = FileSaveOption.SaveCopy;
                 }
                 else if (this.replaceOriginalFileOptionRadioButton.IsChecked == true)
                 {
-                    this.report.FoundFiles[indexSelectedFile].FileSaveOption = FileSaveOption.ReplaceOriginal;
+                    this.foundFileList[indexSelectedFile].FileSaveOption = FileSaveOption.ReplaceOriginal;
                 }
             }
         }
 
         private void saveReportButton_Click(object sender, RoutedEventArgs e)
         {
-            this.report.SaveReportFile(this.fileContentRichTextBox.Document); // сохранение отчёта
+            Report.SaveReportFile(this.fileContentRichTextBox.Document); // сохранение отчёта
         }
     }
 }
