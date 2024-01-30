@@ -1,6 +1,5 @@
 ﻿using System;
 
-
 namespace Censor
 {
     internal static class InfoBox

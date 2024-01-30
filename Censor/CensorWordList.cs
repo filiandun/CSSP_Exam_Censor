@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Windows.Controls;
+using System.Collections.Generic;
 
 namespace Censor
 {
@@ -59,17 +58,10 @@ namespace Censor
 
         public void RemoveAt(int index)
         {
-            try
+            if (index >= 0 && index <= this.censorWords.Count)
             {
-                if (index >= 0 && this.censorWords.Count <= index)
-                {
-                    this.censorWordListBox.Items.RemoveAt(index);
-                    this.censorWords.RemoveAt(index);
-                }
-            }
-            catch (ArgumentOutOfRangeException aoore)
-            {
-                InfoBox.Show(aoore.Message, "Критическая ошибка");
+                this.censorWordListBox.Items.RemoveAt(index);
+                this.censorWords.RemoveAt(index);
             }
         }
 

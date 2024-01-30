@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Windows.Controls;
-using System.Windows.Media;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Controls;
 using System.Windows.Media.Imaging;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Censor
 {
@@ -110,7 +108,7 @@ namespace Censor
             // Создание картинки с иконкой файла
             Image image = new Image
             {
-                Source = new BitmapImage(new Uri(@"D:\Downloads\txt.png")),
+                Source = new BitmapImage(new Uri("pack://application:,,,/Icons/txt.png")),
                 Stretch = Stretch.UniformToFill,
                 Height = 40,
                 Width = 40,

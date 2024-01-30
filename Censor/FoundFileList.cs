@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Windows.Controls;
+using System.Collections.Generic;
 
 namespace Censor
 {
@@ -54,7 +54,7 @@ namespace Censor
 
         public void RemoveAt(int index)
         {
-            if (index >= 0 && this.foundFiles.Count <= index)
+            if (index >= 0 && index <= this.foundFiles.Count)
             {
                 this.foundFileListBox.Items.RemoveAt(index);
                 this.foundFiles.RemoveAt(index);

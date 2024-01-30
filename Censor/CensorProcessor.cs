@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Forms;
 
 namespace Censor
 {
@@ -22,31 +20,48 @@ namespace Censor
 
         public async Task Censor()
         {
-            int totalFiles = this.foundFileList.Count();
-            int processedFile = 0;
-
-            foreach (FoundFile foundFile in this.foundFileList)
+            try
             {
-                await Task.Run(() =>
+                int totalFiles = this.foundFileList.Count();
+                int processedFile = 0;
+
+                foreach (FoundFile foundFile in this.foundFileList)
                 {
-                    string filePath = foundFile.FileInfo.FullName;
-
-                    List<string> oldLines = File.ReadAllLines(filePath).Where(l => !String.IsNullOrWhiteSpace(l)).ToList();
-                    List<string> newLines = oldLines;
-
-                    foreach (string censorWord in this.censorWordList)
+                    await Task.Run(() =>
                     {
-                        newLines = FindingCensorWordsInFile(newLines, censorWord, foundFile);
-                    }
+                        string filePath = foundFile.FileInfo.FullName;
 
-                    if (newLines.Count > 0)
-                    {
-                        //EditFile(newLines, foundFile);
-                    }
+                        // TO DO
+                        // Переделать, так как, если файл очень большой, то всё надолго виснет
+                        List<string> oldLines = File.ReadAllLines(filePath).Where(l => !String.IsNullOrWhiteSpace(l)).ToList();
+                        List<string> newLines = oldLines;
 
-                    processedFile++;
-                    ProgressManager.ReportProgress((int)(((double)processedFile / totalFiles) * 100));
-                });
+                        foreach (string censorWord in this.censorWordList)
+                        {
+                            newLines = FindingCensorWordsInFile(newLines, censorWord, foundFile);
+                        }
+
+                        //List<string> oldLines = File.ReadAllLines(filePath).Where(l => !String.IsNullOrWhiteSpace(l)).ToList();
+                        //List<string> newLines = oldLines;
+
+                        //foreach (string censorWord in this.censorWordList)
+                        //{
+                        //    newLines = FindingCensorWordsInFile(newLines, censorWord, foundFile);
+                        //}
+
+                        if (newLines.Count > 0)
+                        {
+                            EditFile(newLines, foundFile);
+                        }
+
+                        processedFile++;
+                        ProgressManager.ReportProgress((int)(((double)processedFile / totalFiles) * 100));
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Критическая ошибка");
             }
         }
 
@@ -80,33 +95,40 @@ namespace Censor
 
         private void EditFile(List<string> newLines, FoundFile foundFile)
         {
-            string filePath;
+            try
+            {
+                string filePath;
 
-            // Параметры сохранения
-            if (foundFile.FileSaveOption == FileSaveOption.ReplaceOriginal)
-            {
-                // Чтобы и копия не перезаписалась, если вдруг она существует
-                int i = 0;
-                do
+                // Параметры сохранения
+                if (foundFile.FileSaveOption == FileSaveOption.SaveCopy)
                 {
-                    string fileName = Path.GetFileNameWithoutExtension(foundFile.FileInfo.FullName) + "_copy" + (i == 0 ? "" : $"{i}");
-                    filePath = Path.Combine(foundFile.FileInfo.DirectoryName, fileName, foundFile.FileInfo.Extension);
-                    i++;
+                    // Чтобы и копия не перезаписалась, если вдруг она существует
+                    int i = 0;
+                    do
+                    {
+                        string fileName = Path.GetFileNameWithoutExtension(foundFile.FileInfo.FullName) + "_copy" + (i == 0 ? "" : $"{i}");
+                        filePath = Path.Combine(foundFile.FileInfo.DirectoryName, fileName + foundFile.FileInfo.Extension);
+                        i++;
+                    }
+                    while (File.Exists(filePath));
                 }
-                while (File.Exists(filePath));
-            }
-            else
-            {
-                filePath = foundFile.FileInfo.FullName;
-            }
+                else
+                {
+                    filePath = foundFile.FileInfo.FullName;
+                }
 
-            // Создание и запись в файл
-            using (StreamWriter streamWriter = new StreamWriter(filePath))
-            {
-                foreach (string line in newLines)
+                // Создание и запись в файл
+                using (StreamWriter streamWriter = new StreamWriter(filePath))
                 {
-                    streamWriter.WriteLine(line);
+                    foreach (string line in newLines)
+                    {
+                        streamWriter.WriteLine(line);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Критическая ошибка");
             }
         }
     }

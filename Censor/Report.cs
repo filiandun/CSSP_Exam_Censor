@@ -1,39 +1,58 @@
-﻿using Microsoft.Win32;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
+using Microsoft.Win32;
+using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Collections.Generic;
 
 namespace Censor
 {
-    internal static class Report
+    internal class Report
     {
-        public async static Task<string> GenerateReport(FoundFileList foundFileList, CensorWordList censorWordList)
+        private RichTextBox fileContentRichTextBox;
+
+        private FoundFileList foundFileList;
+        private CensorWordList censorWordList;
+
+        public Report(RichTextBox fileContentRichTextBox, FoundFileList foundFileList, CensorWordList censorWordList)
+        {
+            this.fileContentRichTextBox = fileContentRichTextBox;
+
+            this.foundFileList = foundFileList;
+            this.censorWordList = censorWordList;
+        }
+
+        public async Task GenerateReport()
         {
             StringBuilder report = new StringBuilder();
-            report.AppendLine("Отчёт по файлам: ");
+            this.fileContentRichTextBox.AppendText("Отчёт по файлам: ");
+            //report.AppendLine("Отчёт по файлам: ");
 
             await Task.Run(() =>
             {
-                foreach (FoundFile foundFile in foundFileList)
+                foreach (FoundFile foundFile in this.foundFileList)
                 {
-                    report.AppendLine($"\nФайл: {foundFile.FileInfo.Name} ({foundFile.FileInfo.FullName})");
-                    foreach (string censorWord in censorWordList)
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        report.AppendLine($"\tСлово \"{censorWord}\" повторяется {foundFile.CountCensorWord(censorWord)} раз(а).");
+                        this.fileContentRichTextBox.AppendText($"\n\nФайл: {foundFile.FileInfo.Name} ({foundFile.FileInfo.FullName})");
+                    });
+                    //report.AppendLine($"\nФайл: {foundFile.FileInfo.Name} ({foundFile.FileInfo.FullName})");
+                    foreach (string censorWord in this.censorWordList)
+                    {
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            this.fileContentRichTextBox.AppendText($"\n\tСлово \"{censorWord}\" повторяется {foundFile.CountCensorWord(censorWord)} раз(а).");
+                        });
+                        //report.AppendLine($"\tСлово \"{censorWord}\" повторяется {foundFile.CountCensorWord(censorWord)} раз(а).");
                     }
                 }
             });
-
-            return report.ToString();
         }
 
-        public static void SaveReportFile(FlowDocument flowDocument)
+        public void SaveReportFile(FlowDocument flowDocument)
         {
             SaveFileDialog saveFileDialog = new SaveFileDialog()
             {

@@ -21,16 +21,20 @@
             <RowDefinition Height="0.4*"/>
         </Grid.RowDefinitions>
 
+
+        <!-- TO DO -->
+        <!-- Нужно распихать всё по стилям. -->
+
+    
         <!-- ПЕРВЫЙ СТОЛБЕЦ -->
         <!-- верхняя строка -->
-
         <Grid Grid.Row="0" Grid.Column="0">
             <Rectangle Fill="#FF0F0F0F" Margin="5" RadiusX="5" RadiusY="5"/>
             <TextBlock Text="Найденных файлов" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
-            <TextBlock x:Name="fileCountTextBlock" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+            <TextBlock x:Name="fileCountTextBlock" Text="0" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
         </Grid>
 
-        <!-- нижняя строка -->
+        <!-- средняя строка -->
         <Grid Grid.Row="1" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="12*"/>
@@ -72,8 +76,14 @@
 
       
         <!-- ВТОРОЙ СТОЛБЕЦ -->
+        <!-- верхняя строка -->
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Rectangle Fill="#FF0F0F0F" Margin="5" RadiusX="5" RadiusY="5"/>
+            <TextBlock Text="Слов" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+            <TextBlock x:Name="wordCountTextBlock" Text="0" Margin="10" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+        </Grid>
 
-        <!-- нижняя строка -->
+        <!-- средняя строка -->
         <Grid Grid.Row="1" Grid.Column="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="12*"/>
@@ -100,13 +110,19 @@
 
         
         <!-- ТРЕТИЙ СТОЛБЕЦ -->
+        <!-- верхняя строка -->
+        <Grid Grid.Row="0" Grid.Column="2">
+            <Rectangle Fill="#FF0F0F0F" Margin="5" RadiusX="5" RadiusY="5"/>
+            <TextBlock x:Name="reportOrFileTextBlock" Text="Открытый файл" Margin="10" HorizontalAlignment="Left" VerticalAlignment="Center" FontFamily="Segoe UI Variable" FontSize="18" Foreground="White"/>
+        </Grid>
 
+        <!-- средняя строка -->
         <Grid Grid.Row="1" Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="14*"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
+
             <RichTextBox x:Name="fileContentRichTextBox" Grid.Row="0" Grid.Column="1" Margin="5" Foreground="White" BorderBrush="Black" IsReadOnly="True"/>
 
             <UniformGrid x:Name="radioButtonsUniformGrid" Grid.Row="1" Rows="1" Columns="2">
@@ -117,6 +133,9 @@
             <Button x:Name="saveReportButton" Content="Сохранить отчёт" Grid.Row="1" Grid.RowSpan="2" Visibility="Hidden" Margin="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" BorderBrush="Black" Click="saveReportButton_Click"/>
         </Grid>
 
+
+        <!-- ВСЕ СТОЛБЦЫ -->
+        <!-- нижняя строка -->
         <ProgressBar x:Name="progressBar" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Margin="5"/>
     </Grid>
 </Window>
